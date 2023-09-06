@@ -9,6 +9,7 @@
     <li class="breadcrumb-item active">Usuarios</li>
 </ol>
 
+<!-- Card -->
 <div class="card">
     <div class="card-header">
         <i class="fas fa-users me-1"></i> Lista de Usuarios
@@ -17,7 +18,7 @@
     <div class="card-body">
         <div class="row">
             <div class="col-12">
-                <button type="button" class="btn btn-primary">Crear Nuevo</button>
+                <button type="button" class="btn btn-primary" onclick="abrirModal()">Crear Nuevo</button>
             </div>
         </div>
 
@@ -34,10 +35,55 @@
                 </tr>
             </thead>
             <tbody>
-                
             </tbody>
         </table>
 
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="FormModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="exampleModalLabel">Usuario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body g-2">
+
+                <input id="txtID" type="text" value="0"/>
+
+                <div class="row">
+                    <div class="col-sm-6">
+                        <label for="txtNombres" class="form-label">Nombres</label>
+                        <input type="text" class="form-control" id="txtNombres">
+                    </div>
+
+                    <div class="col-sm-6">
+                        <label for="txtApellidos" class="form-label">Apellidos</label>
+                        <input type="text" class="form-control" id="txtApellidos">
+                    </div>
+
+                    <div class="col-sm-6">
+                        <label for="txtCorreo" class="form-label">Correo Electrónico</label>
+                        <input type="text" class="form-control" id="txtCorreo">
+                    </div>
+
+                    <div class="col-sm-6">
+                        <label for="CboActivo" class="form-label">Activo</label>
+                        <select id="CboActivo" class="form-select">
+                            <option value="1">Si</option>
+                            <option value="0">No</option>
+                        </select>
+                    </div>
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="Guardar()">Guardar</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -45,16 +91,7 @@
     <script>
 
         var tablaData;
-
-        jQuery.ajax({
-            url: '@Url.Action("ListarUsuarios","Home")',
-            type: "GET",
-            dataType: "json",
-            contentType: "application/json; charset=utf-8",
-            succes: function (data) {
-                console.log(data)
-            }
-        })
+        var filaSeleccionada;
 
         tablaData = $("#tablaU").DataTable({
             responsive: true,
@@ -65,9 +102,9 @@
                 dataType: "json"
             },
             "columns": [
-                {"data":"Nombres"},
-                {"data":"Apellidos"},
-                {"data":"Correo"},
+                { "data": "Nombres" },
+                { "data": "Apellidos" },
+                { "data": "Correo" },
                 {
                     "data": "Activo", "render": function (valor) {
                         if (valor) {
@@ -78,14 +115,69 @@
                     }
                 },
                 {
-                    "defaultContent": '<button type="button" class="btn btn-warning btn-sm"><i class="fas fa-pen"></i></button>' +
+                    "defaultContent": '<button type="button" class="btn btn-warning btn-sm btn-editar"><i class="fas fa-pen"></i></button>' +
                         '<button type="button" class="btn btn-danger btn-sm ms-2"><i class="fas fa-trash"></i></button>',
                     "orderable": false,
                     "searchable": false,
                     "width": "90px"
                 }
-            ]
+            ],
+            "language": {
+                url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json',
+            }
+        });
+
+        function abrirModal(json) {
+
+            $("#txtID").val(0);
+            $("#txtNombres").val("");
+            $("#txtApellidos").val("");
+            $("#txtCorreo").val("");
+            $("#CboActivo").val(1);
+
+            if (json != null) {
+
+                $("#txtID").val(json.IdUsuario);
+                $("#txtNombres").val(json.Nombres);
+                $("#txtApellidos").val(json.Apellidos);
+                $("#txtCorreo").val(json.Correo);
+                $("#CboActivo").val(json.Activo == true ? 1 : 0);
+
+            }
+
+            $("#FormModal").modal("show");
+        }
+
+        $("#tablaU tbody").on("click", '.btn-editar', function () {
+            filaSeleccionada = $(this).closest("tr");
+
+            var data = tablaData.row(filaSeleccionada).data();
+
+            abrirModal(data)
         })
 
+        function Guardar() {
+
+            var usuario = {
+                IdUsuario: $("#txtID").val(),
+                Activo: $("#CboActivo").val() == 1 ? true : false,
+                Apellidos: $("#txtApellidos").val(),
+                Correo: $("#txtCorreo").val(),
+                Nombres: $("#txtNombres").val()
+            }
+
+            if (usuario.IdUsuario == 0) {
+
+                tablaData.row.add(usuario).draw(false);
+
+            } else {
+
+                tablaData.row(filaSeleccionada).data(usuario).draw(false);
+
+            }
+
+            $("#FormModal").modal("hide");
+        }
+
     </script>
-    } 
+} 
