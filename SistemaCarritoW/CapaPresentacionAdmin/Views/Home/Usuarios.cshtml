@@ -49,24 +49,24 @@
                 <h5 class="modal-title" id="exampleModalLabel">Usuario</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body g-2">
+            <div class="modal-body">
 
                 <input id="txtID" type="text" value="0"/>
 
-                <div class="row">
+                <div class="row g-3">
                     <div class="col-sm-6">
                         <label for="txtNombres" class="form-label">Nombres</label>
-                        <input type="text" class="form-control" id="txtNombres">
+                        <input type="text" class="form-control" id="txtNombres" autocomplete="off">
                     </div>
 
                     <div class="col-sm-6">
                         <label for="txtApellidos" class="form-label">Apellidos</label>
-                        <input type="text" class="form-control" id="txtApellidos">
+                        <input type="text" class="form-control" id="txtApellidos" autocomplete="off">
                     </div>
 
                     <div class="col-sm-6">
                         <label for="txtCorreo" class="form-label">Correo Electrónico</label>
-                        <input type="text" class="form-control" id="txtCorreo">
+                        <input type="text" class="form-control" id="txtCorreo" autocomplete="off">
                     </div>
 
                     <div class="col-sm-6">
@@ -78,6 +78,15 @@
                     </div>
 
                 </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div id="mensajeError" class="alert alert-danger" role="alert">
+                            A simple danger alert—check it out!
+                        </div>
+                    </div>
+                </div>
+
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -135,6 +144,8 @@
             $("#txtCorreo").val("");
             $("#CboActivo").val(1);
 
+            $("#mensajeError").hide();
+
             if (json != null) {
 
                 $("#txtID").val(json.IdUsuario);
@@ -166,17 +177,55 @@
                 Nombres: $("#txtNombres").val()
             }
 
-            if (usuario.IdUsuario == 0) {
+            jQuery.ajax({
+                url: '@Url.Action("GuardarUsuario", "Home")',
+                type: "POST",
+                data: JSON.stringify({ objeto : usuario }),
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
 
-                tablaData.row.add(usuario).draw(false);
+                    debugger;
 
-            } else {
+                    //Usuario Nuevo
+                    if (usuario.IdUsuario == 0) {
 
-                tablaData.row(filaSeleccionada).data(usuario).draw(false);
+                        if (data.resultado != 0) {
 
-            }
+                            usuario.IdUsuario = data.resultado;
 
-            $("#FormModal").modal("hide");
+                            tablaData.row.add(usuario).draw(false);
+
+                            $("#FormModal").modal("hide");
+
+                        } else {
+                            $("#mensajeError").text(data.mensaje);
+                            $("#mensajeError").show();
+                        }
+
+                    } else { //Usuario Editar
+
+                        if (data.resultado) {
+
+                            tablaData.row(filaSeleccionada).data(usuario).draw(false);
+
+                            filaSeleccionada = null;
+
+                            $("#FormModal").modal("hide");
+
+                        } else {
+                            $("#mensajeError").text(data.mensaje);
+                            $("#mensajeError").show();
+                        }
+                    }
+                },
+                error: function (error) { 
+                    console.log(error)
+                },
+                beforeSend: function () {
+
+                }
+            });
         }
 
     </script>
