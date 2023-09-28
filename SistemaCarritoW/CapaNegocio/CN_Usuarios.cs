@@ -17,7 +17,7 @@ namespace CapaNegocio
             return objCapaDatos.ListarUsuarios();
         }
 
-        public int RegistrarUsuarios(Usuario obj, out string mensaje) 
+        public int RegistrarUsuarios(Usuario obj, out string mensaje)
         {
             mensaje = string.Empty;
 
@@ -36,11 +36,26 @@ namespace CapaNegocio
             if (string.IsNullOrEmpty(mensaje))
             {
 
-                string clave = "contraseñatemporal123";
+                string clave = CN_Recursos.GenerarClave();
 
-                obj.Clave = CN_Recursos.ConvertirSha256(clave);
+                string asunto = "Creación de cuenta";
 
-                return objCapaDatos.RegistrarUsuarios(obj, out mensaje);
+                string mensaje_correo = "<h3>Su cuenta fue creada correctamente</h3></br><p>Su contraseña para acceder es: !clave!</p>";
+                mensaje_correo = mensaje_correo.Replace("!clave!", clave);
+
+                bool respuesta = CN_Recursos.EnviarCorreo(obj.Correo, asunto, mensaje_correo);
+
+                if (respuesta)
+                {
+                    obj.Clave = CN_Recursos.ConvertirSha256(clave);
+                    return objCapaDatos.RegistrarUsuarios(obj, out mensaje);
+                }
+                else
+                {
+                    mensaje = "No se pudo enviar el correo";
+                    return 0;
+                }
+                
             }
             else {
                 return 0;
